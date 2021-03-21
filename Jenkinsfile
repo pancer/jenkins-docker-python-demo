@@ -1,20 +1,18 @@
-node {
-    stage('Cleanup') {
-        step([$class: 'WsCleanup'])
-    }
-    stage('Checkout SCM') {
-        checkout scm
-    }
-    def pythonImage
-    stage('build docker image') {
-        pythonImage = docker.build("maxsum:build")
-    }
-    stage('test') {
-        pythonImage.inside {
-            sh '. /tmp/venv/bin/activate && python -m pytest --junitxml=build/results.xml'
+node {    
+      def app     
+      stage('Clone repository') {               
+             
+            checkout scm    
+      }           stage('Build image') {         
+       
+            app = docker.build("brandonjones085/test")    
+       }           stage('Test image') {                       app.inside {            
+             
+             sh 'echo "Tests passed"'        
+            }    
+        }            stage('Push image') {
+                                                  docker.withRegistry('https://registry.hub.docker.com', 'git') {                   app.push("${env.BUILD_NUMBER}")            
+       app.push("latest")        
+              }    
+           }
         }
-    }
-    stage('collect test results') {
-        junit 'build/results.xml'
-    }
-}
